@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Detector de Gato & Cachorro</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+        <style>
+            :root{
+                --paper: #EFEAE0;
+                --paper-dim: #E2DBC8;
+                --ink: #1E2A1F;
+                --forest: #2C4A3B;
+                --forest-deep: #16261C;
+                --mustard: #E8AC3E;
+                --denim: #3C6E8F;
+                --line: rgba(30,42,31,0.18);
+                --radius: 4px;
+            }
+
+            *{ box-sizing: border-box; }
+
+            html, body{
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(circle at 15% 10%, rgba(60,110,143,0.10), transparent 45%),
+                    radial-gradient(circle at 85% 90%, rgba(232,172,62,0.14), transparent 50%),
+                    var(--paper);
+                color: var(--ink);
+                font-family: 'IBM Plex Sans', sans-serif;
+            }
+
+            body{
+                display: flex;
+                justify-content: center;
+                padding: 56px 20px 80px;
+            }
+
+            /* subtle paper grain via layered noise-ish gradient lines */
+            body::before{
+                content: "";
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                background-image: repeating-linear-gradient(0deg, rgba(30,42,31,0.025) 0px, rgba(30,42,31,0.025) 1px, transparent 1px, transparent 3px);
+                mix-blend-mode: multiply;
+                z-index: 0;
+            }
+
+            .stage{
+                position: relative;
+                z-index: 1;
+                width: 100%;
+                max-width: 560px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                opacity: 0;
+                transform: translateY(14px);
+                animation: rise 0.7s cubic-bezier(.2,.7,.3,1) forwards;
+            }
+
+            @keyframes rise{
+                to{ opacity: 1; transform: translateY(0); }
+            }
+
+            /* ---------- Masthead ---------- */
+            .masthead{
+                text-align: center;
+                margin-bottom: 34px;
+                position: relative;
+            }
+
+            .eyebrow{
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 11px;
+                letter-spacing: 0.22em;
+                text-transform: uppercase;
+                color: var(--forest);
+                background: rgba(44,74,59,0.08);
+                border: 1px solid rgba(44,74,59,0.25);
+                padding: 5px 12px;
+                border-radius: 999px;
+                margin-bottom: 18px;
+            }
+
+            .eyebrow::before{
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--mustard);
+                box-shadow: 0 0 0 3px rgba(232,172,62,0.25);
+            }
+
+            h1{
+                font-family: 'Archivo Black', sans-serif;
+                font-weight: 400;
+                font-size: clamp(34px, 7vw, 50px);
+                line-height: 1.02;
+                letter-spacing: -0.01em;
+                margin: 0 0 14px;
+            }
+
+            .sub{
+                font-size: 15px;
+                line-height: 1.55;
+                color: rgba(30,42,31,0.68);
+                max-width: 40ch;
+                margin: 0 auto;
+            }
+
+            .stamp{
+                position: absolute;
+                top: -34px;
+                right: -6px;
+                width: 62px;
+                height: 62px;
+                opacity: 0.85;
+                transform: rotate(9deg);
+                animation: stampIn 0.6s 0.5s cubic-bezier(.2,.8,.3,1.4) both;
+            }
+
+            @keyframes stampIn{
+                from{ opacity: 0; transform: rotate(9deg) scale(0.4); }
+                to{ opacity: 0.85; transform: rotate(9deg) scale(1); }
+            }
+
+            /* ---------- Panel ---------- */
+            .panel{
+                width: 100%;
+                background: var(--paper-dim);
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                padding: 28px;
+                box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 18px 40px -22px rgba(22,38,28,0.35);
+            }
+
+            #start-btn{
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 13px;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--paper);
+                background: var(--forest);
+                border: none;
+                border-radius: 6px;
+                padding: 15px 18px;
+                cursor: pointer;
+                transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+                box-shadow: 0 10px 24px -10px rgba(44,74,59,0.65);
+            }
+
+            #start-btn::before{
+                content: "";
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: var(--mustard);
+                box-shadow: 0 0 0 0 rgba(232,172,62,0.6);
+                animation: dotPulse 1.8s ease-in-out infinite;
+            }
+
+            @keyframes dotPulse{
+                0%, 100%{ box-shadow: 0 0 0 0 rgba(232,172,62,0.55); }
+                50%{ box-shadow: 0 0 0 6px rgba(232,172,62,0); }
+            }
+
+            #start-btn:hover{
+                background: var(--forest-deep);
+                transform: translateY(-1px);
+            }
+
+            #start-btn:active{
+                transform: translateY(0);
+            }
+
+            #start-btn:disabled{
+                cursor: default;
+                background: var(--forest-deep);
+                opacity: 0.85;
+            }
+
+            /* ---------- Viewfinder ---------- */
+            .viewfinder{
+                position: relative;
+                width: 220px;
+                height: 220px;
+                margin: 24px auto 8px;
+                border-radius: 6px;
+                background: var(--forest-deep);
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .corner{
+                position: absolute;
+                width: 22px;
+                height: 22px;
+                border: 2px solid var(--mustard);
+                opacity: 0.9;
+                z-index: 3;
+            }
+            .corner.tl{ top: 8px; left: 8px; border-right: none; border-bottom: none; }
+            .corner.tr{ top: 8px; right: 8px; border-left: none; border-bottom: none; }
+            .corner.bl{ bottom: 8px; left: 8px; border-right: none; border-top: none; }
+            .corner.br{ bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+            .placeholder-text{
+                position: absolute;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 0 30px;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 11.5px;
+                letter-spacing: 0.05em;
+                color: rgba(239,234,224,0.55);
+                z-index: 2;
+                transition: opacity 0.3s ease;
+            }
+
+            .scan-line{
+                position: absolute;
+                left: 4%;
+                width: 92%;
+                height: 2px;
+                background: linear-gradient(90deg, transparent, var(--mustard), transparent);
+                box-shadow: 0 0 10px 1px rgba(232,172,62,0.7);
+                z-index: 2;
+                animation: scan 2.4s ease-in-out infinite;
+            }
+
+            @keyframes scan{
+                0%{ top: 6%; opacity: 0; }
+                10%{ opacity: 1; }
+                50%{ top: 94%; opacity: 1; }
+                60%{ opacity: 0; }
+                100%{ top: 6%; opacity: 0; }
+            }
+
+            #webcam-container{
+                position: relative;
+                z-index: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 0;
+            }
+
+            #webcam-container canvas{
+                border-radius: 3px;
+                animation: fadeInCanvas 0.5s ease both;
+            }
+
+            @keyframes fadeInCanvas{
+                from{ opacity: 0; transform: scale(0.96); }
+                to{ opacity: 1; transform: scale(1); }
+            }
+
+            .viewfinder.is-active .scan-line{
+                animation-duration: 3.6s;
+                opacity: 0.6;
+            }
+
+            .viewfinder.is-active .placeholder-text{
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            /* ---------- Readout ---------- */
+            .readout{
+                margin-top: 26px;
+            }
+
+            .readout-label{
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 10.5px;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: rgba(30,42,31,0.5);
+                margin-bottom: 12px;
+            }
+
+            /* Original label-container: kept in the DOM and functional,
+               restyled as a quiet monospace readout beneath the gauges. */
+            #label-container{
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 11px;
+                color: rgba(30,42,31,0.45);
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px 16px;
+                margin-top: 14px;
+                min-height: 14px;
+            }
+
+            #label-container div{
+                white-space: nowrap;
+            }
+
+            .gauges{
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .gauge-row{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                opacity: 0;
+                transform: translateY(6px);
+                animation: gaugeIn 0.35s ease forwards;
+            }
+
+            @keyframes gaugeIn{
+                to{ opacity: 1; transform: translateY(0); }
+            }
+
+            .gauge-name{
+                width: 90px;
+                flex-shrink: 0;
+                font-size: 13px;
+                font-weight: 600;
+                text-transform: capitalize;
+            }
+
+            .gauge-track{
+                flex: 1;
+                height: 10px;
+                background: rgba(30,42,31,0.08);
+                border-radius: 999px;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .gauge-fill{
+                height: 100%;
+                width: 0%;
+                border-radius: 999px;
+                background: linear-gradient(90deg, var(--denim), var(--forest));
+                transition: width 0.35s cubic-bezier(.3,.7,.3,1);
+            }
+
+            .gauge-row.is-leading .gauge-fill{
+                background: linear-gradient(90deg, var(--mustard), #d69422);
+            }
+
+            .gauge-pct{
+                width: 46px;
+                flex-shrink: 0;
+                text-align: right;
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 12.5px;
+                font-variant-numeric: tabular-nums;
+                color: rgba(30,42,31,0.7);
+            }
+
+            footer{
+                margin-top: 30px;
+                text-align: center;
+                font-size: 11.5px;
+                color: rgba(30,42,31,0.4);
+                font-family: 'IBM Plex Mono', monospace;
+                letter-spacing: 0.03em;
+            }
+
+            @media (prefers-reduced-motion: reduce){
+                *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+            }
+
+            @media (max-width: 420px){
+                .panel{ padding: 22px; }
+                .viewfinder{ width: 180px; height: 180px; }
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <main class="stage">
+
+            <div class="masthead">
+                <svg class="stamp" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="32" cy="40" r="9" fill="#2C4A3B"/>
+                    <ellipse cx="18" cy="24" rx="6" ry="8" fill="#2C4A3B" transform="rotate(-18 18 24)"/>
+                    <ellipse cx="30" cy="18" rx="6" ry="8" fill="#2C4A3B"/>
+                    <ellipse cx="42" cy="20" rx="6" ry="8" fill="#2C4A3B" transform="rotate(14 42 20)"/>
+                    <ellipse cx="49" cy="30" rx="5.5" ry="7.5" fill="#2C4A3B" transform="rotate(32 49 30)"/>
+                </svg>
+                <div class="eyebrow">Scanner de campo · Série 01</div>
+                <h1>Gato ou Cachorro?</h1>
+                <p class="sub">Aponte a câmera para o bichinho e deixe o modelo classificar em tempo real.</p>
+            </div>
+
+            <div class="panel">
+                <button type="button" onclick="init()" id="start-btn">Iniciar câmera</button>
+
+                <div class="viewfinder" id="viewfinder">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                    <div class="scan-line"></div>
+                    <div class="placeholder-text" id="placeholder-text">Aguardando início do escaneamento…</div>
+                    <div id="webcam-container"></div>
+                </div>
+
+                <div class="readout">
+                    <div class="readout-label">Leitura em tempo real</div>
+                    <div class="gauges" id="gauges"></div>
+                    <div id="label-container"></div>
+                </div>
+            </div>
+
+            <footer>Teachable Machine · TensorFlow.js</footer>
+
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+        <script type="text/javascript">
+            // More API functions here:
+            // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+            // the link to your model provided by Teachable Machine export panel
+            const URL = "./model/";
+
+            let model, webcam, labelContainer, maxPredictions;
+
+            // Load the image model and setup the webcam
+            async function init() {
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
+
+                // load the model and metadata
+                // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+                // or files from your local hard drive
+                // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                // Convenience function to setup a webcam
+                const flip = true; // whether to flip the webcam
+                webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
+                await webcam.setup(); // request access to the webcam
+                await webcam.play();
+                window.requestAnimationFrame(loop);
+
+                // append elements to the DOM
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+                labelContainer = document.getElementById("label-container");
+                for (let i = 0; i < maxPredictions; i++) { // and class labels
+                    labelContainer.appendChild(document.createElement("div"));
+                }
+            }
+
+            async function loop() {
+                webcam.update(); // update the webcam frame
+                await predict();
+                window.requestAnimationFrame(loop);
+            }
+
+            // run the webcam image through the image model
+            async function predict() {
+                // predict can take in an image, video or canvas html element
+                const prediction = await model.predict(webcam.canvas);
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction =
+                        prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                    labelContainer.childNodes[i].innerHTML = classPrediction;
+                }
+            }
+        </script>
+
+        <script>
+            // ---------------------------------------------------------------
+            // Camada puramente visual: não altera nenhuma função acima.
+            // Observa o #label-container original e desenha os medidores
+            // (gauges) animados, além de atualizar os estados de UI.
+            // ---------------------------------------------------------------
+            (function () {
+                const startBtn = document.getElementById("start-btn");
+                const viewfinder = document.getElementById("viewfinder");
+                const webcamContainer = document.getElementById("webcam-container");
+                const labelContainerEl = document.getElementById("label-container");
+                const gaugesEl = document.getElementById("gauges");
+
+                const gaugeRows = new Map(); // className -> { row, fill, pct }
+
+                function ensureGaugeRow(name) {
+                    if (gaugeRows.has(name)) return gaugeRows.get(name);
+
+                    const row = document.createElement("div");
+                    row.className = "gauge-row";
+
+                    const nameEl = document.createElement("div");
+                    nameEl.className = "gauge-name";
+                    nameEl.textContent = name;
+
+                    const track = document.createElement("div");
+                    track.className = "gauge-track";
+                    const fill = document.createElement("div");
+                    fill.className = "gauge-fill";
+                    track.appendChild(fill);
+
+                    const pct = document.createElement("div");
+                    pct.className = "gauge-pct";
+                    pct.textContent = "0%";
+
+                    row.appendChild(nameEl);
+                    row.appendChild(track);
+                    row.appendChild(pct);
+                    gaugesEl.appendChild(row);
+
+                    const entry = { row, fill, pct };
+                    gaugeRows.set(name, entry);
+                    return entry;
+                }
+
+                function refreshGauges() {
+                    const rows = labelContainerEl.querySelectorAll("div");
+                    let bestName = null;
+                    let bestVal = -1;
+                    const parsed = [];
+
+                    rows.forEach((div) => {
+                        const text = div.textContent || "";
+                        const idx = text.lastIndexOf(":");
+                        if (idx === -1) return;
+                        const name = text.slice(0, idx).trim();
+                        const value = parseFloat(text.slice(idx + 1));
+                        if (!name || Number.isNaN(value)) return;
+                        parsed.push({ name, value });
+                        if (value > bestVal) {
+                            bestVal = value;
+                            bestName = name;
+                        }
+                    });
+
+                    parsed.forEach(({ name, value }) => {
+                        const entry = ensureGaugeRow(name);
+                        const percent = Math.round(value * 100);
+                        entry.fill.style.width = percent + "%";
+                        entry.pct.textContent = percent + "%";
+                        entry.row.classList.toggle("is-leading", name === bestName);
+                    });
+                }
+
+                // Observa mudanças de texto nas divs de predição
+                const textObserver = new MutationObserver(refreshGauges);
+                textObserver.observe(labelContainerEl, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true,
+                });
+
+                // Quando o canvas da webcam é inserido, muda o estado visual do viewfinder
+                const webcamObserver = new MutationObserver(() => {
+                    if (webcamContainer.querySelector("canvas")) {
+                        viewfinder.classList.add("is-active");
+                    }
+                });
+                webcamObserver.observe(webcamContainer, { childList: true });
+
+                // Feedback do botão ao clicar, sem tocar na função init()
+                startBtn.addEventListener("click", () => {
+                    if (startBtn.disabled) return;
+                    startBtn.disabled = true;
+                    startBtn.textContent = "Escaneando…";
+                });
+            })();
+        </script>
+
+    </body>
+</html>
