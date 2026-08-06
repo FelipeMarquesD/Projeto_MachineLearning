@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Detector de Gato & Cachorro</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+
+    <body>
+        <!-- Botão de tema -->
+        <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">
+            <span id="theme-icon">🌙</span>
+        </button>
+
+        <!-- Fundo animado -->
+        <div class="bg-blobs" aria-hidden="true">
+            <span class="blob blob-orange"></span>
+            <span class="blob blob-purple"></span>
+            <span class="blob blob-teal"></span>
+        </div>
+        <div class="grain" aria-hidden="true"></div>
+
+        <main class="detector-shell">
+            <header class="detector-header reveal">
+                <div class="pill-badge">Teachable Machine · Image Model</div>
+                <h1 class="title">
+                    <span class="title-cat">Gato</span>
+                    <span class="title-or"> ou </span>
+                    <span class="title-dog">Cachorro?</span>
+                </h1>
+                <p class="subtitle">
+                    Aponte a câmera para o seu pet e a inteligência artificial descobre
+                    quem está na frente em tempo real.
+                </p>
+            </header>
+
+            <section class="glass-card reveal delay">
+                <div class="card-grid">
+                    <!-- Câmera -->
+                    <div class="cam-col">
+                        <div id="cam-frame" class="cam-frame">
+                            <div class="cam-ring"></div>
+                            <div id="scan-line" class="scan-line" style="display:none"></div>
+                            <div id="webcam-container" class="webcam-container"></div>
+                            <div id="cam-placeholder" class="cam-placeholder">
+                                <span class="ph-icon">📷</span>
+                                <span id="cam-status-text">A câmera aparece aqui</span>
+                            </div>
+                            <div id="live-tag" class="live-tag" style="display:none">
+                                <span class="live-dot"></span> AO VIVO
+                            </div>
+                        </div>
+
+                        <div class="cam-actions">
+                            <button type="button" id="start-btn" class="start-btn" onclick="init()">
+                                <span class="start-btn-inner">✨ Iniciar detecção</span>
+                            </button>
+                            <button type="button" id="snap-btn" class="snap-btn" style="display:none" onclick="capturePhoto()">
+                                ⬇ Salvar foto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div class="result-col">
+                        <div id="verdict" class="verdict verdict-empty" style="--accent:#6b7280">
+                            <div class="verdict-icon" id="verdict-icon">🐾</div>
+                            <div class="verdict-text">
+                                <span class="verdict-label" id="verdict-label">Aguardando</span>
+                                <strong class="verdict-name" id="verdict-name">Clique em iniciar</strong>
+                            </div>
+                            <span class="verdict-pct" id="verdict-pct"></span>
+                        </div>
+
+                        <div class="bars">
+                            <h3 class="bars-title">Confiança por classe</h3>
+                            <p id="bars-hint" class="bars-hint">
+                                As probabilidades de cada classe do seu modelo aparecem aqui em tempo real.
+                            </p>
+                            <div id="label-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="detector-footer reveal delay2">
+                🐾 Feito com carinho para os melhores amigos de quatro patas
+            </footer>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
